@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stores</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Georgia&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Georgia', serif;
+      height: 100vh;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    
+    #menu {
+      background-image: url(shop.png);
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      padding: 24px;
+      border-radius: 10px;
+      color: #a67c52;
+      display: none;
+      width: 480px;
+      max-height: 95vh;
+      overflow-y: auto;
+      border: 2px solid #a67c52;
+      margin-right: 32px;
+    }
+
+    h1, h2 {
+      font-family: 'Cinzel', serif;
+      color: #a67c52;
+      text-align: center;
+      background-color: #000000b2;
+      padding: 10px;
+      border: 2px solid #a67c52;
+      border-radius: 4px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 16px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 15px;
+      background-color: #000000b2;
+      border: 2px solid #a67c52;
+      border-radius: 5px;
+      color: #a67c52;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #000000;
+      border-color: #a67c52;
+    }
+
+    .close-btn {
+      background-color: #000000b2;
+      border-color: #a67c52;
+    }
+
+    .close-btn:hover {
+      background-color: #000000;
+      border-color: #a67c52;
+    }
+
+    .back-btn {
+      background-color: #000000b2;
+      border-color: #a67c52;
+    }
+
+    .back-btn:hover {
+      background-color: #000000;
+      border-color: #a67c52;
+    }
+
+    .categorias-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      column-gap: 6px;
+      row-gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .categoria-btn {
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 13px;
+      background-color: #000000b2;
+      border: 2px solid #a67c52;
+      border-radius: 4px;
+      color: #a67c52;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .categoria-btn:hover {
+      background-color: #000000;
+      border-color: #a67c52;
+    }
+
+    .section {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: #a67c52 transparent;
+    }
+
+    .section::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .section::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .section::-webkit-scrollbar-thumb {
+      background-color: #a67c52;
+      border-radius: 3px;
+      border: 1px solid #3a2a1b;
+    }
+
+    .section::-webkit-scrollbar-thumb:hover {
+      background-color: #c89f72;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #000000b2;
+      padding: 10px;
+      border: 2px solid #a67c52;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .item-row img {
+      width: 50px;
+      height: 50px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+
+    .item-info {
+      flex-grow: 1;
+      text-align: left;
+      margin-left: 10px;
+    }
+
+    .item-info span {
+      display: block;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .item-info strong {
+      display: block;
+      font-size: 13px;
+      color: #f1c40f;
+    }
+
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .item-actions input {
+      width: 50px;
+      padding: 4px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: none;
+      text-align: center;
+    }
+
+    .item-actions button {
+      padding: 4px 8px;
+      font-size: 13px;
+      background-color: #7d5a3a;
+      border: 2px solid #5c3b1e;
+      border-radius: 4px;
+      color: #f5e6c8;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .item-actions button:hover {
+      background-color: #5c3b1e;
+      border-color: #3e2814;
+    }
+
+    .item-info .precio {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .container-merchant {
+      position: absolute;
+      right: 2%;
+      top: 90%;
+      transform: translateY(-50%);
+      width: 150px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid rgba(156, 112, 60, 0.829);
+      border-radius: 15px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      display: none;
+      z-index: 1000;
+    }
+
+    .title-merchant {
+      font-size: 18px;
+      font-weight: bold;
+      color: rgba(156, 112, 60, 0.829);
+      margin: 0;
+      word-wrap: break-word;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <div id="mainMenu">
+      <h1></h1>
+      <button id="btnComprar" onclick="showBuy()"></button>
+      <button id="btnVender" onclick="showSell()"></button>
+      <button class="close-btn" onclick="closeMenu()"></button>
+    </div>
+
+    <div id="buySection">
+      <h2></h2>
+      <div id="buyCategorias" class="categorias-container"></div>
+      <div id="buyItems" class="section"></div>
+      <button class="back-btn" onclick="showMain()"></button>
+    </div>
+
+    <div id="sellSection">
+      <h2></h2>
+      <div id="sellCategorias" class="categorias-container"></div>
+      <div id="sellItems" class="section"></div>
+      <button class="back-btn" onclick="showMain()"></button>
+    </div>
+  </div>
+
+  <div class="container-merchant">
+    <div class="title-merchant" id="merchantText"></div>
+  </div>
+
+  <script>
+    let buyData = []
+    let sellData = []
+    let mostrarComprar = true
+    let mostrarVender = true
+    let categoriasComprar = {}
+    let categoriasVender = {}
+    let categoriaActualCompra = ""
+    let categoriaActualVenta = ""
+    let textos = {}
+    let tituloTienda = ""
+    let tiendaIdActual = null
+
+    window.addEventListener("message", function (event) {
+      const data = event.data;
+
+      const merchant = document.querySelector('.container-merchant');
+      const merchantText = document.getElementById('merchantText');
+
+      if (event.data.type === "open") {
+        buyData = event.data.buyItems
+        sellData = event.data.sellItems
+        mostrarComprar = event.data.mostrarComprar
+        mostrarVender = event.data.mostrarVender
+        categoriasComprar = event.data.categoriasComprar || {}
+        categoriasVender = event.data.categoriasVender || {}
+        textos = event.data.textos || {}
+        tituloTienda = event.data.titulo || textos.titulo || ""
+        tiendaIdActual = event.data.tiendaId || null
+
+        document.querySelector("h1").textContent = tituloTienda
+        document.getElementById("btnComprar").textContent = textos.btnComprar || ""
+        document.getElementById("btnVender").textContent = textos.btnVender || ""
+        document.querySelector(".close-btn").textContent = textos.btnCerrar || ""
+        document.querySelector("#buySection h2").textContent = textos.tituloComprar || ""
+        document.querySelector("#sellSection h2").textContent = textos.tituloVender || ""
+        document.querySelector("#buySection .back-btn").textContent = textos.btnVolver || ""
+        document.querySelector("#sellSection .back-btn").textContent = textos.btnVolver || ""
+
+        document.getElementById("btnComprar").style.display = mostrarComprar ? "block" : "none"
+        document.getElementById("btnVender").style.display = mostrarVender ? "block" : "none"
+
+        document.getElementById("menu").style.display = "block"
+        showMain()
+      }
+
+      if (data.type === 'showmerchant') {
+        merchantText.textContent = data.text || '';
+        merchant.style.display = 'block';
+      }
+
+      if (data.type === 'hidemerchant') {
+        merchant.style.display = 'none';
+      }
+    })
+
+    function showMain() {
+      document.getElementById("mainMenu").style.display = "block"
+      document.getElementById("buySection").style.display = "none"
+      document.getElementById("sellSection").style.display = "none"
+    }
+
+    function showBuy() {
+      if (!mostrarComprar) return
+      categoriaActualCompra = getPrimeraCategoriaActiva(categoriasComprar)
+      renderCategorias("buyCategorias", categoriasComprar, categoriaActualCompra, (cat) => {
+        categoriaActualCompra = cat
+        renderItems("buyItems", buyData, categoriaActualCompra, "buy")
+      })
+      renderItems("buyItems", buyData, categoriaActualCompra, "buy")
+      document.getElementById("mainMenu").style.display = "none"
+      document.getElementById("buySection").style.display = "block"
+    }
+
+    function showSell() {
+      if (!mostrarVender) return
+      categoriaActualVenta = getPrimeraCategoriaActiva(categoriasVender)
+      renderCategorias("sellCategorias", categoriasVender, categoriaActualVenta, (cat) => {
+        categoriaActualVenta = cat
+        renderItems("sellItems", sellData, categoriaActualVenta, "sell")
+      })
+      renderItems("sellItems", sellData, categoriaActualVenta, "sell")
+      document.getElementById("mainMenu").style.display = "none"
+      document.getElementById("sellSection").style.display = "block"
+    }
+
+    function getPrimeraCategoriaActiva(categorias) {
+      for (const cat in categorias) {
+        if (categorias[cat]) return cat
+      }
+      return textos.sinCategoria || ""
+    }
+
+    function renderCategorias(containerId, categorias, activa, callback) {
+      const container = document.getElementById(containerId)
+      container.innerHTML = ""
+      for (const cat in categorias) {
+        if (!categorias[cat]) continue
+        const btn = document.createElement("button")
+        btn.textContent = cat
+        btn.className = "categoria-btn"
+        btn.onclick = () => callback(cat)
+        container.appendChild(btn)
+      }
+    }
+
+    function renderItems(containerId, data, categoria, tipo) {
+      const container = document.getElementById(containerId)
+      container.innerHTML = ""
+      const filtrados = data.filter(item => {
+        return item.categoria === false || !item.categoria || item.categoria === categoria
+      })
+      if (filtrados.length === 0) {
+        container.innerHTML = `<p>${textos.sinObjetos || ""}</p>`
+        return
+      }
+      filtrados.forEach(item => {
+        const simbolo = item.moneda === "gold" ? textos.monedaGold : textos.monedaDollar
+        const color = item.moneda === "gold" ? "#f1c40f" : "#2ecc71"
+        const precioNatural = item.price % 1 === 0 ? item.price.toFixed(0) : item.price.toString()
+
+        const row = document.createElement("div")
+        row.classList.add("item-row")
+        row.innerHTML = `
+          <img src="${item.img}" alt="${item.label}">
+          <div class="item-info">
+            <span>${item.label}</span>
+            <span class="precio" style="color: ${color}; font-family: 'Roboto Mono', monospace;">${precioNatural} ${simbolo}</span>
+          </div>
+          <div class="item-actions">
+            <input type="number" min="1" step="1" value="1" id="${tipo}_${item.item}">
+            <button onclick="${tipo}('${item.item}')">${tipo === "buy" ? (textos.btnAccionComprar || "") : (textos.btnAccionVender || "")}</button>
+          </div>
+        `
+        container.appendChild(row)
+      })
+    }
+
+    function buy(itemName) {
+      const cantidad = parseInt(document.getElementById(`buy_${itemName}`).value)
+      if (cantidad > 0) {
+        fetch(`https://${GetParentResourceName()}/buyItem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item: itemName,
+            cantidad: cantidad,
+            tiendaId: tiendaIdActual
+          })
+        })
+      }
+    }
+
+    function sell(itemName) {
+      const cantidad = parseInt(document.getElementById(`sell_${itemName}`).value)
+      if (cantidad > 0) {
+        fetch(`https://${GetParentResourceName()}/sellItem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item: itemName,
+            cantidad: cantidad,
+            tiendaId: tiendaIdActual
+          })
+        })
+      }
+    }
+
+    function closeMenu() {
+      document.getElementById("menu").style.display = "none"
+      fetch(`https://${GetParentResourceName()}/close`, {
+        method: "POST"
+      })
+    }
+  </script>
+</body>
+</html>
