@@ -8,18 +8,6 @@ local rutaActual = 1
 local showingPrompt = false
 local npcshop_creating = false
 
-Citizen.CreateThread(function()
-    while not Config or not Config.rutas or #Config.rutas == 0 do
-        Wait(1000)
-    end
-
-    Wait(1000)
-
-    if Config.TiendaNPCActiva then
-        crearNPCShop()
-    end
-end)
-
 function crearNPCShop()
     if npcshop_creating then
         return
