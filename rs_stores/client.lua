@@ -9,13 +9,12 @@ local showingPrompt = false
 local npcshop_creating = false
 
 function crearNPCShop()
-    if npcshop_creating then
-        return
-    end
+    if npcshop_creating then return end
     npcshop_creating = true
 
     if npcshop and DoesEntityExist(npcshop) then
         DeleteEntity(npcshop)
+        while DoesEntityExist(npcshop) do Wait(10) end
         npcshop = nil
     end
 
