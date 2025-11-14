@@ -146,21 +146,106 @@ function CrearPromptTienda(id, label, coords)
 end
 
 Citizen.CreateThread(function()
+    for id, tienda in pairs(Config.TiendasLocales) do
+        CrearPromptTienda(id, tienda.label, tienda.coords)
+    end
+end)
+
+local MOD_RED = GetHashKey("BLIP_MODIFIER_MP_COLOR_10")
+local MOD_WHITE = GetHashKey("BLIP_MODIFIER_MP_COLOR_32")
+
+local function BlipAddModifier(blip, modifierHash)
+    Citizen.InvokeNative(0x662D364ABF16DE2F, blip, modifierHash)
+end
+
+local function BlipRemoveModifier(blip, modifierHash)
+    Citizen.InvokeNative(0xB059D7BD3D78C16F, blip, modifierHash)
+end
+
+local function BlipHasModifier(blip, modifierHash)
+    return Citizen.InvokeNative(0xD8C3BE3EE94CAF2D, blip, modifierHash)
+end
+
+function IsStoreOpen(tienda)
+    if not tienda.StoreHoursAllowed then return true end
+    local hora = GetClockHours()
+    return hora >= tienda.StoreOpen and hora < tienda.StoreClose
+end
+
+Citizen.CreateThread(function()
     for nombre, tienda in pairs(Config.TiendasLocales) do
-        if tienda.enableblip then
-            local coords = tienda.coords
-            local blip = N_0x554d9d53f696d002(1664425300, coords.x, coords.y, coords.z)
-            SetBlipSprite(blip, tienda.sprite or 1, true)
-            SetBlipScale(blip, 0.2)
+        if tienda.enableblip and tienda.coords then
+            local c = tienda.coords
+            local blip = Citizen.InvokeNative(0x554D9D53F696D002, GetHashKey("BLIP_STYLE_PICKUP"), c.x, c.y, c.z)
+            SetBlipSprite(blip, tienda.sprite, 0)
             Citizen.InvokeNative(0x9CB1A1623062F402, blip, tienda.label or nombre)
-            tiendaBlips[nombre] = blip
+
+            if IsStoreOpen(tienda) then
+                BlipAddModifier(blip, MOD_WHITE)
+            else
+                BlipAddModifier(blip, MOD_RED)
+            end
+
+            tiendaBlips[nombre] = {
+                blip = blip,
+                tienda = tienda
+            }
         end
     end
 end)
 
 Citizen.CreateThread(function()
-    for id, tienda in pairs(Config.TiendasLocales) do
-        CrearPromptTienda(id, tienda.label, tienda.coords)
+    while true do
+        Citizen.Wait(1000)
+        for nombre, info in pairs(tiendaBlips) do
+            local blip = info.blip
+            local tienda = info.tienda
+
+            local isClosed = not IsStoreOpen(tienda)
+            local hasRed = BlipHasModifier(blip, MOD_RED)
+            local hasWhite = BlipHasModifier(blip, MOD_WHITE)
+
+            if isClosed then
+                if hasWhite then BlipRemoveModifier(blip, MOD_WHITE) end
+                if not hasRed then BlipAddModifier(blip, MOD_RED) end
+            else
+                if hasRed then BlipRemoveModifier(blip, MOD_RED) end
+                if not hasWhite then BlipAddModifier(blip, MOD_WHITE) end
+            end
+        end
+    end
+end)
+
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(5000)
+        for nombre, tienda in pairs(Config.TiendasLocales) do
+            if tienda.enablenpc and tienda.cordnpc and tienda.npcmodel then
+                local npcActual = NpcTienda[nombre]
+
+                if IsStoreOpen(tienda) then
+                    if not npcActual or not DoesEntityExist(npcActual) then
+                        local model = GetHashKey(tienda.npcmodel)
+                        RequestModel(model)
+                        while not HasModelLoaded(model) do Wait(100) end
+                        local npc = CreatePed(model, tienda.cordnpc.x, tienda.cordnpc.y, tienda.cordnpc.z - 1.0, tienda.cordnpc.w, false, true)
+                        Citizen.InvokeNative(0x283978A15512B2FE, npc, true)
+                        SetEntityNoCollisionEntity(PlayerPedId(), npc, true)
+                        SetEntityCanBeDamaged(npc, false)
+                        SetEntityInvincible(npc, true)
+                        FreezeEntityPosition(npc, true)
+                        SetBlockingOfNonTemporaryEvents(npc, true)
+                        SetModelAsNoLongerNeeded(model)
+                        NpcTienda[nombre] = npc
+                    end
+                else
+                    if npcActual and DoesEntityExist(npcActual) then
+                        DeleteEntity(npcActual)
+                        NpcTienda[nombre] = nil
+                    end
+                end
+            end
+        end
     end
 end)
 
@@ -169,7 +254,8 @@ Citizen.CreateThread(function()
         Citizen.Wait(0)
         local playerCoords = GetEntityCoords(PlayerPedId())
         for id, datos in pairs(tiendaPrompts) do
-            if #(playerCoords - datos.coords) < 2.5 then
+            local tienda = Config.TiendasLocales[id]
+            if #(playerCoords - datos.coords) < 2.5 and IsStoreOpen(tienda) then
                 UiPromptSetActiveGroupThisFrame(datos.group, datos.label)
                 if UiPromptHasStandardModeCompleted(datos.prompt) then
                     TriggerServerEvent("rs_stores:getLocalShopItems", id)
@@ -233,31 +319,12 @@ RegisterNUICallback("close", function(_, cb)
     cb("ok")
 end)
 
-Citizen.CreateThread(function()
-    for nombre, tienda in pairs(Config.TiendasLocales) do
-        if tienda.enablenpc and tienda.cordnpc and tienda.npcmodel then
-            TriggerEvent("rs_stores:CreateNPC", tienda.cordnpc, tienda.npcmodel)
-        end
-    end
-end)
-
-RegisterNetEvent("rs_stores:CreateNPC")
-AddEventHandler("rs_stores:CreateNPC", function(coords, modelName)
-    if not coords or not modelName then return end
-
-    local model = GetHashKey(modelName)
-    RequestModel(model)
-    while not HasModelLoaded(model) do Wait(500) end
-
-    local npc = CreatePed(model, coords.x, coords.y, coords.z - 1.0, coords.w, false, true)
-    Citizen.InvokeNative(0x283978A15512B2FE, npc, true)
-    SetEntityNoCollisionEntity(PlayerPedId(), npc, true)
-    SetEntityCanBeDamaged(npc, false)
-    SetEntityInvincible(npc, true)
-    FreezeEntityPosition(npc, true)
-    SetBlockingOfNonTemporaryEvents(npc, true)
-    SetModelAsNoLongerNeeded(model)
-    table.insert(NpcTienda, npc)
+RegisterNetEvent("rs_stores:removeSoldItemFromUI")
+AddEventHandler("rs_stores:removeSoldItemFromUI", function(itemName)
+    SendNUIMessage({
+        action = "removeSellItem",
+        item = itemName
+    })
 end)
 
 AddEventHandler("onResourceStop", function(resourceName)
@@ -265,8 +332,8 @@ AddEventHandler("onResourceStop", function(resourceName)
         if npcshop and DoesEntityExist(npcshop) then DeleteEntity(npcshop) end
         if npcBlip then RemoveBlip(npcBlip) end
 
-        for _, blip in pairs(tiendaBlips) do
-            if blip then RemoveBlip(blip) end
+        for _, info in pairs(tiendaBlips) do
+            if info.blip then RemoveBlip(info.blip) end
         end
 
         for _, entidad in pairs(NpcTienda) do
