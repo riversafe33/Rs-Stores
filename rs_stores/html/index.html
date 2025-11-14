@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Stores</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Georgia&display=swap" rel="stylesheet">
   <style>
@@ -22,7 +23,7 @@
       background-repeat: no-repeat;
       background-position: center;
       padding: 24px;
-      border-radius: 10px;
+      border-radius: 14px;
       color: #a67c52;
       display: none;
       width: 480px;
@@ -33,13 +34,13 @@
     }
 
     h1, h2 {
-      font-family: 'Cinzel', serif;
+      font-family: 'Rye', cursive;
       color: #a67c52;
       text-align: center;
       background-color: #000000b2;
       padding: 10px;
       border: 2px solid #a67c52;
-      border-radius: 4px;
+      border-radius: 14px;
     }
 
     h1 {
@@ -53,17 +54,19 @@
     }
 
     button {
+      font-family: 'Rye', cursive;
       display: block;
       width: 100%;
       margin: 8px 0;
       padding: 10px;
-      font-size: 15px;
+      font-size: 16px;
       background-color: #000000b2;
       border: 2px solid #a67c52;
-      border-radius: 5px;
+      border-radius: 15px;
       color: #a67c52;
       cursor: pointer;
       transition: background-color 0.3s ease, border-color 0.3s ease;
+      font-weight: bold;
     }
 
     button:hover {
@@ -102,13 +105,14 @@
     .categoria-btn {
       margin: 0;
       padding: 6px 10px;
-      font-size: 13px;
+      font-size: 14px;
       background-color: #000000b2;
       border: 2px solid #a67c52;
-      border-radius: 4px;
+      border-radius: 14px;
       color: #a67c52;
       cursor: pointer;
       transition: background-color 0.3s ease, border-color 0.3s ease;
+      font-weight: bold;
     }
 
     .categoria-btn:hover {
@@ -149,7 +153,7 @@
       background-color: #000000b2;
       padding: 10px;
       border: 2px solid #a67c52;
-      border-radius: 4px;
+      border-radius: 14px;
       margin-bottom: 10px;
       box-shadow: 0 0 4px rgba(0,0,0,0.4);
     }
@@ -157,7 +161,7 @@
     .item-row img {
       width: 50px;
       height: 50px;
-      border-radius: 4px;
+      border-radius: 14px;
       object-fit: cover;
     }
 
@@ -189,7 +193,7 @@
       width: 50px;
       padding: 4px;
       font-size: 13px;
-      border-radius: 4px;
+      border-radius: 14px;
       border: none;
       text-align: center;
     }
@@ -198,8 +202,8 @@
       padding: 4px 8px;
       font-size: 13px;
       background-color: #7d5a3a;
-      border: 2px solid #5c3b1e;
-      border-radius: 4px;
+      border: 2px solid #a67c52;
+      border-radius: 14px;
       color: #f5e6c8;
       cursor: pointer;
       transition: background-color 0.3s ease, border-color 0.3s ease;
@@ -241,6 +245,12 @@
       word-wrap: break-word;
     }
 
+    .sin-objetos {
+      color: #000000;
+      font-weight: bold;
+      text-align: center;
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
@@ -285,21 +295,20 @@
     let tiendaIdActual = null
 
     window.addEventListener("message", function (event) {
-      const data = event.data;
+      const data = event.data
+      const merchant = document.querySelector('.container-merchant')
+      const merchantText = document.getElementById('merchantText')
 
-      const merchant = document.querySelector('.container-merchant');
-      const merchantText = document.getElementById('merchantText');
-
-      if (event.data.type === "open") {
-        buyData = event.data.buyItems
-        sellData = event.data.sellItems
-        mostrarComprar = event.data.mostrarComprar
-        mostrarVender = event.data.mostrarVender
-        categoriasComprar = event.data.categoriasComprar || {}
-        categoriasVender = event.data.categoriasVender || {}
-        textos = event.data.textos || {}
-        tituloTienda = event.data.titulo || textos.titulo || ""
-        tiendaIdActual = event.data.tiendaId || null
+      if (data.type === "open") {
+        buyData = data.buyItems
+        sellData = data.sellItems
+        mostrarComprar = data.mostrarComprar
+        mostrarVender = data.mostrarVender
+        categoriasComprar = data.categoriasComprar || {}
+        categoriasVender = data.categoriasVender || {}
+        textos = data.textos || {}
+        tituloTienda = data.titulo || textos.titulo || ""
+        tiendaIdActual = data.tiendaId || null
 
         document.querySelector("h1").textContent = tituloTienda
         document.getElementById("btnComprar").textContent = textos.btnComprar || ""
@@ -318,12 +327,12 @@
       }
 
       if (data.type === 'showmerchant') {
-        merchantText.textContent = data.text || '';
-        merchant.style.display = 'block';
+        merchantText.textContent = data.text || ''
+        merchant.style.display = 'block'
       }
 
       if (data.type === 'hidemerchant') {
-        merchant.style.display = 'none';
+        merchant.style.display = 'none'
       }
     })
 
@@ -384,9 +393,10 @@
         return item.categoria === false || !item.categoria || item.categoria === categoria
       })
       if (filtrados.length === 0) {
-        container.innerHTML = `<p>${textos.sinObjetos || ""}</p>`
+        container.innerHTML = `<p class="sin-objetos">${textos.sinObjetos || ""}</p>`
         return
       }
+
       filtrados.forEach(item => {
         const simbolo = item.moneda === "gold" ? textos.monedaGold : textos.monedaDollar
         const color = item.moneda === "gold" ? "#f1c40f" : "#2ecc71"
@@ -401,12 +411,28 @@
             <span class="precio" style="color: ${color}; font-family: 'Roboto Mono', monospace;">${precioNatural} ${simbolo}</span>
           </div>
           <div class="item-actions">
-            <input type="number" min="1" step="1" value="1" id="${tipo}_${item.item}">
+            <input type="number" min="1" step="1" value="1" ${tipo === "sell" ? `max="${item.cantidad}"` : ""} id="${tipo}_${item.item}">
             <button onclick="${tipo}('${item.item}')">${tipo === "buy" ? (textos.btnAccionComprar || "") : (textos.btnAccionVender || "")}</button>
+            ${tipo === "sell" ? `<button class="max-btn" onclick="setMax('${item.item}')">${textos.btnMax || 'Max'}</button>` : ''}
           </div>
         `
         container.appendChild(row)
+
+        if (tipo === "sell") {
+          const input = document.getElementById(`sell_${item.item}`)
+          input.addEventListener('input', () => {
+            if (parseInt(input.value) > item.cantidad) input.value = item.cantidad
+            if (parseInt(input.value) < 1) input.value = 1
+          })
+        }
       })
+    }
+
+    function setMax(itemName) {
+      let item = sellData.find(i => i.item === itemName)
+      if (!item) return
+      const input = document.getElementById(`sell_${itemName}`)
+      input.value = item.cantidad
     }
 
     function buy(itemName) {
@@ -425,25 +451,45 @@
     }
 
     function sell(itemName) {
-      const cantidad = parseInt(document.getElementById(`sell_${itemName}`).value)
-      if (cantidad > 0) {
-        fetch(`https://${GetParentResourceName()}/sellItem`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            item: itemName,
-            cantidad: cantidad,
-            tiendaId: tiendaIdActual
-          })
+      const input = document.getElementById(`sell_${itemName}`)
+      let cantidad = parseInt(input.value)
+      let item = sellData.find(i => i.item === itemName)
+      if (!item) return
+
+      if (cantidad > item.cantidad) cantidad = item.cantidad
+      if (cantidad <= 0) return
+
+      fetch(`https://${GetParentResourceName()}/sellItem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item: itemName,
+          cantidad: cantidad,
+          tiendaId: tiendaIdActual
+        })
+      })
+
+      item.cantidad -= cantidad
+      if (item.cantidad <= 0) {
+        sellData = sellData.filter(i => i.item !== itemName)
+      }
+
+      const quedanEnCategoria = sellData.some(i => i.categoria === categoriaActualVenta)
+      if (!quedanEnCategoria) {
+        delete categoriasVender[categoriaActualVenta]
+        categoriaActualVenta = getPrimeraCategoriaActiva(categoriasVender)
+        renderCategorias("sellCategorias", categoriasVender, categoriaActualVenta, (cat) => {
+          categoriaActualVenta = cat
+          renderItems("sellItems", sellData, categoriaActualVenta, "sell")
         })
       }
+
+      renderItems("sellItems", sellData, categoriaActualVenta, "sell")
     }
 
     function closeMenu() {
       document.getElementById("menu").style.display = "none"
-      fetch(`https://${GetParentResourceName()}/close`, {
-        method: "POST"
-      })
+      fetch(`https://${GetParentResourceName()}/close`, { method: "POST" })
     }
   </script>
 </body>
