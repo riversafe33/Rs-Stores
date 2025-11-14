@@ -4,7 +4,8 @@ local VorpInv = exports.vorp_inventory:vorp_inventoryApi()
 RegisterServerEvent("rs_stores:getItemsForUI")
 AddEventHandler("rs_stores:getItemsForUI", function()
     local src = source
-    local Character = VORPcore.getUser(src).getUsedCharacter
+    local User = VORPcore.getUser(src)
+    local Character = User.getUsedCharacter
     if not Character then return end
 
     local job = Character.job
@@ -13,15 +14,10 @@ AddEventHandler("rs_stores:getItemsForUI", function()
         local permitido = false
 
         if type(Config.job) == "string" then
-            if job == Config.job then
-                permitido = true
-            end
+            if job == Config.job then permitido = true end
         elseif type(Config.job) == "table" then
             for _, v in pairs(Config.job) do
-                if job == v then
-                    permitido = true
-                    break
-                end
+                if job == v then permitido = true break end
             end
         end
 
@@ -50,16 +46,41 @@ AddEventHandler("rs_stores:getItemsForUI", function()
     end
 
     if Config.mostrarVender then
+
+        local userItems = exports.vorp_inventory:getUserInventoryItems(src)
+        local userWeapons = exports.vorp_inventory:getUserInventoryWeapons(src)
+
         for _, item in pairs(Config.ItemsToSell) do
-            table.insert(sellItems, {
-                item = item.item,
-                label = item.label,
-                price = item.price,
-                categoria = item.categoria,
-                moneda = item.gold and "gold" or "dollar"
-            })
-            if item.categoria and item.categoria ~= false then
-                categoriasVender[item.categoria] = true
+            local hasItem = false
+
+            if item.weapon then
+                for _, w in pairs(userWeapons) do
+                    if w.name == item.item then
+                        hasItem = true
+                        break
+                    end
+                end
+            else
+                for _, invItem in pairs(userItems) do
+                    if invItem.name == item.item and invItem.count > 0 then
+                        hasItem = true
+                        break
+                    end
+                end
+            end
+
+            if hasItem then
+                table.insert(sellItems, {
+                    item = item.item,
+                    label = item.label,
+                    price = item.price,
+                    categoria = item.categoria,
+                    moneda = item.gold and "gold" or "dollar"
+                })
+
+                if item.categoria and item.categoria ~= false then
+                    categoriasVender[item.categoria] = true
+                end
             end
         end
     end
@@ -84,7 +105,8 @@ AddEventHandler("rs_stores:getLocalShopItems", function(tiendaId)
     local tienda = Config.TiendasLocales[tiendaId]
     if not tienda then return end
 
-    local Character = VORPcore.getUser(src).getUsedCharacter
+    local User = VORPcore.getUser(src)
+    local Character = User.getUsedCharacter
     if not Character then return end
 
     local job = Character.job
@@ -93,15 +115,10 @@ AddEventHandler("rs_stores:getLocalShopItems", function(tiendaId)
         local permitido = false
 
         if type(tienda.job) == "string" then
-            if job == tienda.job then
-                permitido = true
-            end
+            if job == tienda.job then permitido = true end
         elseif type(tienda.job) == "table" then
             for _, v in pairs(tienda.job) do
-                if job == v then
-                    permitido = true
-                    break
-                end
+                if job == v then permitido = true break end
             end
         end
 
@@ -130,16 +147,43 @@ AddEventHandler("rs_stores:getLocalShopItems", function(tiendaId)
     end
 
     if tienda.mostrarVender then
+
+        local userItems = exports.vorp_inventory:getUserInventoryItems(src)
+        local userWeapons = exports.vorp_inventory:getUserInventoryWeapons(src)
+
         for _, item in pairs(tienda.ItemsToSell) do
-            table.insert(sellItems, {
-                item = item.item,
-                label = item.label,
-                price = item.price,
-                categoria = item.categoria,
-                moneda = item.gold and "gold" or "dollar"
-            })
-            if item.categoria and item.categoria ~= false then
-                categoriasVender[item.categoria] = true
+            local hasItem = false
+            local cantidad = 0
+
+            if item.weapon then
+                for _, w in pairs(userWeapons) do
+                    if w.name == item.item then
+                        hasItem = true
+                        cantidad = cantidad + 1
+                    end
+                end
+            else
+                for _, invItem in pairs(userItems) do
+                    if invItem.name == item.item and invItem.count > 0 then
+                        hasItem = true
+                        cantidad = invItem.count
+                    end
+                end
+            end
+
+            if hasItem then
+                table.insert(sellItems, {
+                    item = item.item,
+                    label = item.label,
+                    price = item.price,
+                    categoria = item.categoria,
+                    moneda = item.gold and "gold" or "dollar",
+                    cantidad = cantidad
+                })
+
+                if item.categoria and item.categoria ~= false then
+                    categoriasVender[item.categoria] = true
+                end
             end
         end
     end
@@ -157,6 +201,7 @@ AddEventHandler("rs_stores:getLocalShopItems", function(tiendaId)
         tiendaId = tiendaId
     })
 end)
+
 
 RegisterServerEvent("rs_stores:buyItem")
 AddEventHandler("rs_stores:buyItem", function(itemName, cantidad, tiendaId)
@@ -310,4 +355,6 @@ AddEventHandler("rs_stores:sellItem", function(itemName, cantidad, tiendaId)
         Character.addCurrency(0, total)
         TriggerClientEvent("vorp:TipBottom", src, Config.Textos.Notify.sell .. " " .. cantidad .. " x " .. itemData.label .. " " .. Config.Textos.Notify.ford .. " " .. total .. "$", 4000)
     end
+
+    TriggerClientEvent("rs_stores:removeSoldItemFromUI", src, itemName)
 end)
