@@ -52,19 +52,20 @@ AddEventHandler("rs_stores:getItemsForUI", function()
 
         for _, item in pairs(Config.ItemsToSell) do
             local hasItem = false
+            local cantidad = 0
 
             if item.weapon then
                 for _, w in pairs(userWeapons) do
                     if w.name == item.item then
                         hasItem = true
-                        break
+                        cantidad = cantidad + 1
                     end
                 end
             else
                 for _, invItem in pairs(userItems) do
                     if invItem.name == item.item and invItem.count > 0 then
                         hasItem = true
-                        break
+                        cantidad = invItem.count
                     end
                 end
             end
@@ -75,7 +76,8 @@ AddEventHandler("rs_stores:getItemsForUI", function()
                     label = item.label,
                     price = item.price,
                     categoria = item.categoria,
-                    moneda = item.gold and "gold" or "dollar"
+                    moneda = item.gold and "gold" or "dollar",
+                    cantidad = cantidad
                 })
 
                 if item.categoria and item.categoria ~= false then
@@ -201,7 +203,6 @@ AddEventHandler("rs_stores:getLocalShopItems", function(tiendaId)
         tiendaId = tiendaId
     })
 end)
-
 
 RegisterServerEvent("rs_stores:buyItem")
 AddEventHandler("rs_stores:buyItem", function(itemName, cantidad, tiendaId)
