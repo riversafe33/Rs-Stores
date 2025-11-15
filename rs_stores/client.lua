@@ -1,6 +1,5 @@
 local openmenu = nil
 local tiendaPrompts = {}
-local tiendaBlips = {}
 local NpcTienda = {}
 local npcshop = nil
 local npcBlip = nil
@@ -151,8 +150,14 @@ Citizen.CreateThread(function()
     end
 end)
 
-local MOD_RED = GetHashKey("BLIP_MODIFIER_MP_COLOR_10")
-local MOD_WHITE = GetHashKey("BLIP_MODIFIER_MP_COLOR_32")
+function IsStoreOpen(tienda)
+    if not tienda.StoreHoursAllowed then return true end
+    local hora = GetClockHours()
+    return hora >= tienda.StoreOpen and hora < tienda.StoreClose
+end
+
+local MOD_RED   = joaat("BLIP_MODIFIER_MP_COLOR_10")
+local MOD_WHITE = joaat("BLIP_MODIFIER_MP_COLOR_32")
 
 local function BlipAddModifier(blip, modifierHash)
     Citizen.InvokeNative(0x662D364ABF16DE2F, blip, modifierHash)
@@ -162,55 +167,58 @@ local function BlipRemoveModifier(blip, modifierHash)
     Citizen.InvokeNative(0xB059D7BD3D78C16F, blip, modifierHash)
 end
 
-local function BlipHasModifier(blip, modifierHash)
-    return Citizen.InvokeNative(0xD8C3BE3EE94CAF2D, blip, modifierHash)
+local function AddBlip(storeId)
+    local tienda = Config.TiendasLocales[storeId]
+    if not tienda.enableblip or not tienda.coords then return end
+
+    if tienda.BlipHandle then return end
+
+    local c = tienda.coords
+    local blip = BlipAddForCoords(joaat("BLIP_STYLE_SHOP"), c.x, c.y, c.z)
+
+    SetBlipSprite(blip, tienda.sprite, false)
+    Citizen.InvokeNative(0x9CB1A1623062F402, blip, tienda.label or storeId)
+
+    tienda.BlipHandle = blip
+
+    if IsStoreOpen(tienda) then
+        BlipAddModifier(blip, MOD_WHITE)
+        tienda.estado = "abierto"
+    else
+        BlipAddModifier(blip, MOD_RED)
+        tienda.estado = "cerrado"
+    end
 end
 
-function IsStoreOpen(tienda)
-    if not tienda.StoreHoursAllowed then return true end
-    local hora = GetClockHours()
-    return hora >= tienda.StoreOpen and hora < tienda.StoreClose
+local function UpdateBlip(storeId)
+    local tienda = Config.TiendasLocales[storeId]
+    local blip   = tienda.BlipHandle
+    if not blip then return end
+
+    local abierto = IsStoreOpen(tienda)
+    if abierto and tienda.estado ~= "abierto" then
+        BlipRemoveModifier(blip, 0)
+        BlipAddModifier(blip, MOD_WHITE)
+        tienda.estado = "abierto"
+    elseif not abierto and tienda.estado ~= "cerrado" then
+        BlipRemoveModifier(blip, 0)
+        BlipAddModifier(blip, MOD_RED)
+        tienda.estado = "cerrado"
+    end
 end
 
 Citizen.CreateThread(function()
-    for nombre, tienda in pairs(Config.TiendasLocales) do
-        if tienda.enableblip and tienda.coords then
-            local c = tienda.coords
-            local blip = Citizen.InvokeNative(0x554D9D53F696D002, GetHashKey("BLIP_STYLE_PICKUP"), c.x, c.y, c.z)
-            SetBlipSprite(blip, tienda.sprite, 0)
-            Citizen.InvokeNative(0x9CB1A1623062F402, blip, tienda.label or nombre)
-
-            if IsStoreOpen(tienda) then
-                BlipAddModifier(blip, MOD_WHITE)
-            else
-                BlipAddModifier(blip, MOD_RED)
-            end
-
-            tiendaBlips[nombre] = {
-                blip = blip,
-                tienda = tienda
-            }
-        end
+    for storeId, tienda in pairs(Config.TiendasLocales) do
+        AddBlip(storeId)
     end
 end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(1000)
-        for nombre, info in pairs(tiendaBlips) do
-            local blip = info.blip
-            local tienda = info.tienda
-
-            local isClosed = not IsStoreOpen(tienda)
-            local hasRed = BlipHasModifier(blip, MOD_RED)
-            local hasWhite = BlipHasModifier(blip, MOD_WHITE)
-
-            if isClosed then
-                if hasWhite then BlipRemoveModifier(blip, MOD_WHITE) end
-                if not hasRed then BlipAddModifier(blip, MOD_RED) end
-            else
-                if hasRed then BlipRemoveModifier(blip, MOD_RED) end
-                if not hasWhite then BlipAddModifier(blip, MOD_WHITE) end
+        Citizen.Wait(5000)
+        for storeId, tienda in pairs(Config.TiendasLocales) do
+            if tienda.BlipHandle then
+                UpdateBlip(storeId)
             end
         end
     end
@@ -329,17 +337,26 @@ end)
 
 AddEventHandler("onResourceStop", function(resourceName)
     if resourceName == GetCurrentResourceName() then
-        if npcshop and DoesEntityExist(npcshop) then DeleteEntity(npcshop) end
-        if npcBlip then RemoveBlip(npcBlip) end
+        if npcshop and DoesEntityExist(npcshop) then
+            DeleteEntity(npcshop)
+        end
 
-        for _, info in pairs(tiendaBlips) do
-            if info.blip then RemoveBlip(info.blip) end
+        if npcBlip then
+            RemoveBlip(npcBlip)
         end
 
         for _, entidad in pairs(NpcTienda) do
-            if entidad and DoesEntityExist(entidad) then DeleteEntity(entidad) end
+            if entidad and DoesEntityExist(entidad) then
+                DeleteEntity(entidad)
+            end
         end
 
-        npcshop, npcBlip, tiendaBlips, NpcTienda = nil, nil, {}, {}
+        for storeId, tienda in pairs(Config.TiendasLocales) do
+            if tienda.BlipHandle then
+                RemoveBlip(tienda.BlipHandle)
+                tienda.BlipHandle = nil
+            end
+        end
+        npcshop, npcBlip, NpcTienda = nil, nil, {}
     end
 end)
