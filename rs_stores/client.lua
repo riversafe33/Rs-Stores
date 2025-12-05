@@ -35,7 +35,7 @@ function crearNPCShop()
     local x, y, z = datos.coords.x, datos.coords.y, datos.coords.z - 1.0
     local heading = datos.heading or 0.0
 
-    npcshop = Citizen.InvokeNative(0xD49F9B0955C367DE, model, x, y, z, heading, true, true, true, true)
+    npcshop = CreatePed(model, x, y, z, heading, false, true)
 
     if npcshop and DoesEntityExist(npcshop) then
         Citizen.InvokeNative(0x283978A15512B2FE, npcshop, true)
@@ -62,6 +62,7 @@ function crearNPCShop()
     end
 end
 
+
 Citizen.CreateThread(function()
     while true do
         Wait(5000)
@@ -72,6 +73,7 @@ Citizen.CreateThread(function()
         end
     end
 end)
+
 
 function moverNPCShop()
     Citizen.CreateThread(function()
@@ -84,7 +86,9 @@ function moverNPCShop()
                 SetEntityHeading(npcshop, heading)
                 FreezeEntityPosition(npcshop, true)
 
-                if npcBlip then SetBlipCoords(npcBlip, x, y, z) end
+                if npcBlip then
+                    SetBlipCoords(npcBlip, x, y, z)
+                end
             end
 
             Citizen.Wait(Config.merchattimelocation * 60 * 1000)
@@ -93,6 +97,7 @@ function moverNPCShop()
         end
     end)
 end
+
 
 Citizen.CreateThread(function()
     while true do
