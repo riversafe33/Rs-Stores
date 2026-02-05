@@ -231,31 +231,43 @@ end)
 
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(5000)
+        Citizen.Wait(2000)
+        local playerPed = PlayerPedId()
+        local playerCoords = GetEntityCoords(playerPed)
+
         for nombre, tienda in pairs(Config.TiendasLocales) do
             if tienda.enablenpc and tienda.cordnpc and tienda.npcmodel then
                 local npcActual = NpcTienda[nombre]
+                local npcCoords = vector3(
+                    tienda.cordnpc.x,
+                    tienda.cordnpc.y,
+                    tienda.cordnpc.z
+                )
 
-                if IsStoreOpen(tienda) then
+                local distancia = #(playerCoords - npcCoords)
+                local spawnDist = 50.0
+                local despawnDist = 60.0
+
+                if IsStoreOpen(tienda) and distancia <= spawnDist then
                     if not npcActual or not DoesEntityExist(npcActual) then
                         local model = GetHashKey(tienda.npcmodel)
                         RequestModel(model)
                         while not HasModelLoaded(model) do Wait(100) end
-                        local npc = CreatePed(model, tienda.cordnpc.x, tienda.cordnpc.y, tienda.cordnpc.z - 1.0, tienda.cordnpc.w, false, true)
+                        local npc = CreatePed( model, tienda.cordnpc.x, tienda.cordnpc.y, tienda.cordnpc.z - 1.0, tienda.cordnpc.w, false, true)
                         Citizen.InvokeNative(0x283978A15512B2FE, npc, true)
-                        SetEntityNoCollisionEntity(PlayerPedId(), npc, true)
+                        SetEntityNoCollisionEntity(playerPed, npc, true)
                         SetEntityCanBeDamaged(npc, false)
                         SetEntityInvincible(npc, true)
                         FreezeEntityPosition(npc, true)
                         SetBlockingOfNonTemporaryEvents(npc, true)
+
                         SetModelAsNoLongerNeeded(model)
                         NpcTienda[nombre] = npc
                     end
-                else
-                    if npcActual and DoesEntityExist(npcActual) then
-                        DeleteEntity(npcActual)
-                        NpcTienda[nombre] = nil
-                    end
+
+                elseif npcActual and DoesEntityExist(npcActual) and distancia >= despawnDist then
+                    DeleteEntity(npcActual)
+                    NpcTienda[nombre] = nil
                 end
             end
         end
