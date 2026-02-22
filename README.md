@@ -24,6 +24,6 @@ Fully configurable from config.lua
 
 # ----------------------------------------------------------------- #
 
-<img width="581" height="408" alt="image" src="https://github.com/user-attachments/assets/bcbab9e1-e902-43f6-a80c-78ee6ef03ce5" />
+<img width="1040" height="697" alt="image" src="https://github.com/user-attachments/assets/7122db17-ca02-456d-b18f-692f975852fc" />
 
-<img width="1276" height="839" alt="image" src="https://github.com/user-attachments/assets/8cc3ba8b-6a27-4707-b6b9-344368d89b5f" />
+<img width="1025" height="697" alt="image" src="https://github.com/user-attachments/assets/f9c89130-617d-4b62-a9a7-e03e90d9dabc" />
